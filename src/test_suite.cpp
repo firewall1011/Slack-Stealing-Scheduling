@@ -21,3 +21,7 @@ TEST_CASE("A* test"){
 		CHECK_EQ(A_star[i], expected[i]);
 	}
 }
+
+TEST_CASE("Fail test"){
+	CHECK_EQ(0, 1);
+}
