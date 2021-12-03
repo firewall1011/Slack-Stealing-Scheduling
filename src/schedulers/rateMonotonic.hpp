@@ -28,11 +28,14 @@ namespace RTSSCheduler
             // Parameters
             unsigned H = 1; // hyperperiodo (a.k.a LCM from periods)
 
-            // COntainers
+            std::vector<unsigned> slack_stealer_function; // a.k.a A*(t)
+
+            // Containers
             std::vector<Task> periodic_tasks;
             std::priority_queue<Task> task_queue;
             // std::priority_queue<Task, std::vector<Task>, decltype(sortTaskByLowPeriodTime)> task_queue(sortTaskByLowPeriodTime);
             std::priority_queue<Task> future_tasks;
             // std::priority_queue<Task, std::vector<Task>, decltype(sortTaskByEarliestArrivalTime)> future_tasks(sortTaskByEarliestArrivalTime);            
+    
     };
 }
