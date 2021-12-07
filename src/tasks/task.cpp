@@ -27,6 +27,12 @@ namespace RTSTasks
         return this->finish_time > 0;
     }
 
+    bool Task::compute()
+    {
+        computed++;
+        return (computed >= computation_cost);
+    }
+
     // Ordering functions
     bool sortTaskByEarliestDeadline(const Task& a, const Task& b)
     {

@@ -25,6 +25,16 @@ int _getPeriodicInstanceDeadline(const Task& task, unsigned j)
     return (task.arrival_time + task.period*(j-1)) + task.deadline;
 }
 
+unsigned _getAperiodicProcessingTime(const Task& task, unsigned s, unsigned t)
+{
+    return 0; // TODO: it's just mocked
+}
+
+void _emptyQueue(std::priority_queue<Task>& queue)
+{
+    while(!queue.empty()) queue.pop();
+}
+
 namespace RTSSCheduler 
 {
     // Pré-configurantions: Task Initialization
@@ -88,12 +98,67 @@ namespace RTSSCheduler
     // Running Scheduler
     void RateMonotonicScheduler::start()
     {
-        // Do nothing
+        _emptyQueue(periodic_arriving);
+        for (const Task& periodic : periodic_tasks)
+        {
+            periodic_arriving.push(periodic);
+        }
+        abs_time = 0;
     }
 
     void RateMonotonicScheduler::tick()
     {
-        // Do nothing
+        // First step: add all ready tasks to processing queue
+        Task task = periodic_arriving.top();
+        while (task.arrival_time == abs_time)
+        {
+            periodic_arriving.pop();
+            periodic_processing.push(task);
+            
+            task = periodic_arriving.top();
+        }
+
+        Task task = aperiodic_arriving.top();
+        while (task.arrival_time == abs_time)
+        {
+            aperiodic_arriving.pop();
+            aperiodic_processing.push(task);
+            
+            task = aperiodic_arriving.top();
+        }
+        
+        // Second step: choose task to process
+        Task task_to_process = aperiodic_processing.top();
+        
+        unsigned earliest_deadline = 0;
+        bool enough_ap_processing = _getAperiodicProcessingTime(task_to_process, abs_time, earliest_deadline) > 0;
+        
+        if (aperiodic_processing.empty() || !enough_ap_processing)
+        {
+            task_to_process = periodic_processing.top();
+        }
+
+        // Third step: process task
+        bool doneProcessing = task_to_process.compute();
+        
+        // Forth step: remove task from queue if done
+        if(doneProcessing)
+        {
+            if(task.isPeriodic())
+            {
+                periodic_processing.pop();
+                task_to_process.computed = 0;
+                task_to_process.arrival_time += task_to_process.period;
+                periodic_arriving.push(task_to_process);
+            }
+            else
+            {
+                aperiodic_processing.pop();
+            }
+        }
+        
+        // Fifth step: advance time
+        abs_time += 1;
     }
 
     void RateMonotonicScheduler::addOnlineTask(Task t)

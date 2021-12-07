@@ -27,12 +27,15 @@ namespace RTSSCheduler
         private:
             // Parameters
             unsigned H = 1; // hyperperiodo (a.k.a LCM from periods)
+            unsigned abs_time = 0; // absolute time in timeline
 
-            // COntainers
+            // Containers
             std::vector<Task> periodic_tasks;
-            std::priority_queue<Task> task_queue;
-            // std::priority_queue<Task, std::vector<Task>, decltype(sortTaskByLowPeriodTime)> task_queue(sortTaskByLowPeriodTime);
-            std::priority_queue<Task> future_tasks;
-            // std::priority_queue<Task, std::vector<Task>, decltype(sortTaskByEarliestArrivalTime)> future_tasks(sortTaskByEarliestArrivalTime);            
+            
+            std::priority_queue<Task> periodic_arriving;    // order by arrival time
+            std::priority_queue<Task> aperiodic_arriving;   // order by arrival time
+            
+            std::priority_queue<Task> periodic_processing;  // order by priority
+            std::priority_queue<Task> aperiodic_processing; // order by priority
     };
 }

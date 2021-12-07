@@ -29,6 +29,7 @@ namespace RTSTasks
             
             bool isFinished() const;
 
+            bool compute();
     };
 
     bool sortTaskByEarliestDeadline(const Task& a, const Task& b);
@@ -42,6 +43,6 @@ namespace RTSTasks
 // ----------------------
 //
 // - Difference between deadline, finish_time and response_time?
-//   > deadline: limit time to a task be done or trows a time fault;
+//   > deadline: limit time to a task be done or throws a time fault;
 //   > finish_time: point in time when a task was finished;
 //   > response_time: diff between finish_time - arrival_time;
