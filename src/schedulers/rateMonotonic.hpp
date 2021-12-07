@@ -31,11 +31,13 @@ namespace RTSSCheduler
 
             // Containers
             std::vector<Task> periodic_tasks;
-            
-            std::priority_queue<Task> periodic_arriving;    // order by arrival time
+
+            std::priority_queue<Task> periodic_arriving; // order by arrival time
             std::priority_queue<Task> aperiodic_arriving;   // order by arrival time
             
             std::priority_queue<Task> periodic_processing;  // order by priority
             std::priority_queue<Task> aperiodic_processing; // order by priority
+
+            std::vector<unsigned> slack_stealer_function; // a.k.a A*(t)
     };
 }

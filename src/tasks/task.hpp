@@ -11,6 +11,7 @@ namespace RTSTasks
             unsigned deadline;           // ~ Di (periodic)    | none
             unsigned finish_time;        // ~ Cij (periodic)   | Tk (aperiodic)
             unsigned response_time;      // ~ Cij (periodic)   | Rk (aperiodic)
+            unsigned priority;           // ~ i (periodic)     | i (aperiodic)
 
             // Periodic specific functions
             unsigned period;            // Ti (periodic)
@@ -30,6 +31,11 @@ namespace RTSTasks
             bool isFinished() const;
 
             bool compute();
+
+            bool operator<(const Task& other) const
+            {
+                return this->arrival_time < other.arrival_time;
+            }
     };
 
     bool sortTaskByEarliestDeadline(const Task& a, const Task& b);
