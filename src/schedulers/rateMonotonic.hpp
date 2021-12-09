@@ -38,6 +38,9 @@ namespace RTSSCheduler
             std::priority_queue<Task> periodic_processing;  // order by priority
             std::priority_queue<Task> aperiodic_processing; // order by priority
 
-            std::vector<unsigned> slack_stealer_function; // a.k.a A*(t)
+		public:
+            std::vector<unsigned> ap_proc_time_zero_H;      // a.k.a A*(t)
+            std::vector<unsigned> ap_proc_time_per_level;   // a.k.a Ai(t)
+            unsigned ap_processing_available;               // a.k.a last calculated A*(s, t)
     };
 }

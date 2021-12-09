@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <limits>
 #include "rateMonotonic.hpp"
-#include "../utils/lcm.hpp"
+#include "utils/lcm.hpp"
 
 using namespace RTSTasks;
 
@@ -53,10 +53,18 @@ namespace RTSSCheduler
             this->preloadTask(t);
     }
 
+    // Calcular Ai(t) para o hyperperiod (H), com i de todas prioridades (tasks).
+    // A cada começo de hyperperiodo reseta os acumuladores pra 0
+    // Criar um acumulador para cada nivel de prioridade Ii(t)
+    // Criar um acumulador para cada processamento aperiodico feito ap_acc
+
     void RateMonotonicScheduler::prepareScheduler()
     {
         // First step: order functions by period time (fixed priority)
         std::sort(this->periodic_tasks.begin(), this->periodic_tasks.end(), sortTaskByLowPeriodTime);
+        
+        for(int i = 0; i < this->periodic_tasks.size(); i++)
+            periodic_tasks[i].priority = i;
 
         // Second step: compute the hyperperiod of all periodic functions
         for(auto t: this->periodic_tasks)
@@ -69,12 +77,14 @@ namespace RTSSCheduler
         std::vector<unsigned> high_priority_ready_work(H+2);
         std::vector<unsigned> task_ready_work(H+2); 
         
-        // Fourth step: do at the same time the computantions of A*(t) to avoid useless storage :)
-        this->slack_stealer_function.resize(H+1);
-        std::fill(this->slack_stealer_function.begin(), this->slack_stealer_function.end(), std::numeric_limits<unsigned>::max());
+        // Fourth step: do at the same time the computations of A*(t) to avoid useless storage :)
+        this->ap_proc_time_zero_H.resize(H+1);
+        this->ap_proc_time_per_level.resize(H+1);
+        
+        std::fill(this->ap_proc_time_zero_H.begin(), this->ap_proc_time_zero_H.end(), std::numeric_limits<unsigned>::max());
 
         for(auto task: this->periodic_tasks)
-        {      
+        {
             // Compute Pi(t) or task_ready_work
             unsigned j = 0; // a.k.a j-th job of i-th periodic task
             for(auto t = 0; t <= this->H+1; t++)
@@ -109,12 +119,12 @@ namespace RTSSCheduler
 
                 // Debug Ai(t) values
                 // std::cout << "t: " << t << "\tj:"<< j << "\tdead:" << task_deadline << "\tw:" << task_ready_work[task_deadline-1] << "\tAi:" << task_deadline - task_ready_work[task_deadline-1] << std::endl;
-
-                this->slack_stealer_function[t] = std::min(this->slack_stealer_function[t], (task_deadline-task_ready_work[task_deadline-1]));
+                this->ap_proc_time_per_level[task.priority] = task_deadline - task_ready_work[task_deadline-1];
+                this->ap_proc_time_zero_H[t] = std::min(this->ap_proc_time_zero_H[t], this->ap_proc_time_per_level[task.priority]);
             }
 
             // Print A*t()
-            // for(auto slack: this->slack_stealer_function)
+            // for(auto slack: this->ap_proc_time_zero_H)
             //    std::cout << slack << " "; std::cout << std::endl;
 
             high_priority_ready_work = task_ready_work;

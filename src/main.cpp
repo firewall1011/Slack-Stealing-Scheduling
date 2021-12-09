@@ -1,7 +1,7 @@
 #include <iostream>
-#include "./tasks/task.hpp"
-#include "./tasks/taskbuilder.hpp"
-#include "./schedulers/rateMonotonic.hpp"
+#include "tasks/task.hpp"
+#include "tasks/taskbuilder.hpp"
+#include "schedulers/rateMonotonic.hpp"
 
 using namespace RTSTasks;
 using namespace RTSSCheduler;
