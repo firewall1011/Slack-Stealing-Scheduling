@@ -40,7 +40,7 @@ namespace RTSSCheduler
 
 		public:
             std::vector<unsigned> ap_proc_time_zero_H;      // a.k.a A*(t)
-            std::vector<unsigned> ap_proc_time_per_level;   // a.k.a Ai(t)
+            std::vector<std::vector<unsigned>> ap_proc_time_per_level;   // a.k.a Ai(t)
             unsigned ap_processing_available;               // a.k.a last calculated A*(s, t)
     };
 }

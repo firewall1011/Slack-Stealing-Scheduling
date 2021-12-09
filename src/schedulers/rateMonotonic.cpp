@@ -79,7 +79,7 @@ namespace RTSSCheduler
         
         // Fourth step: do at the same time the computations of A*(t) to avoid useless storage :)
         this->ap_proc_time_zero_H.resize(H+1);
-        this->ap_proc_time_per_level.resize(H+1);
+        this->ap_proc_time_per_level.resize(periodic_tasks.size());
         
         std::fill(this->ap_proc_time_zero_H.begin(), this->ap_proc_time_zero_H.end(), std::numeric_limits<unsigned>::max());
 
@@ -110,6 +110,7 @@ namespace RTSSCheduler
 
             // Compute Ai(t) and A*(t)
             j = 1;
+			this->ap_proc_time_per_level[task.priority].resize(this->H + 1);
             for(auto t = 0; t <= this->H; t++)
             {    
                 unsigned task_deadline = std::min<unsigned>(this->H, _getPeriodicInstanceDeadline(task, j));
@@ -119,8 +120,8 @@ namespace RTSSCheduler
 
                 // Debug Ai(t) values
                 // std::cout << "t: " << t << "\tj:"<< j << "\tdead:" << task_deadline << "\tw:" << task_ready_work[task_deadline-1] << "\tAi:" << task_deadline - task_ready_work[task_deadline-1] << std::endl;
-                this->ap_proc_time_per_level[task.priority] = task_deadline - task_ready_work[task_deadline-1];
-                this->ap_proc_time_zero_H[t] = std::min(this->ap_proc_time_zero_H[t], this->ap_proc_time_per_level[task.priority]);
+                this->ap_proc_time_per_level[task.priority][t] = task_deadline - task_ready_work[task_deadline-1];
+                this->ap_proc_time_zero_H[t] = std::min(this->ap_proc_time_zero_H[t], this->ap_proc_time_per_level[task.priority][t]);
             }
 
             // Print A*t()

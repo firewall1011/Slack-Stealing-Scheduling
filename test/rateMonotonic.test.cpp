@@ -31,7 +31,7 @@ TEST_CASE("RateMonotonicScheduler test") {
 		CHECK_THROWS_AS(scheduler.prepareScheduler(), const std::runtime_error&);
 	}
 
-	SUBCASE("A* calculation") {
+	SUBCASE("A*(t) calculation") {
 		unsigned expected[13] {0, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3}; 
 		
 		RateMonotonicScheduler scheduler;
@@ -44,6 +44,31 @@ TEST_CASE("RateMonotonicScheduler test") {
 		for(int i = 0; i < scheduler.ap_proc_time_zero_H.size(); i++)
 		{
 			CHECK(scheduler.ap_proc_time_zero_H[i] == expected[i]);
+		}
+	}
+
+	SUBCASE("Ai(t) calculation") {
+		unsigned expected_A[13] {0, 3, 3, 3, 3, 6, 6, 6, 6, 9, 9, 9, 9}; 
+		unsigned expected_B[13] {1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3}; 
+		
+		RateMonotonicScheduler scheduler;
+		scheduler.preloadTask(taskA);
+		scheduler.preloadTask(taskB);
+		scheduler.prepareScheduler();
+		
+		REQUIRE(scheduler.ap_proc_time_per_level[0].size() == sizeof(expected_A) / sizeof(unsigned));
+		REQUIRE(scheduler.ap_proc_time_per_level[1].size() == sizeof(expected_B) / sizeof(unsigned));
+		
+		auto& ap_proc_time = scheduler.ap_proc_time_per_level[0];
+		for(int i = 0; i < ap_proc_time.size(); i++)
+		{
+			CHECK(ap_proc_time[i] == expected_A[i]);
+		}
+		
+		ap_proc_time = scheduler.ap_proc_time_per_level[1];
+		for(int i = 0; i < ap_proc_time.size(); i++)
+		{
+			CHECK(ap_proc_time[i] == expected_B[i]);
 		}
 	}
 }
