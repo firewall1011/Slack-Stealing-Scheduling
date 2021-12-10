@@ -256,11 +256,15 @@ namespace RTSSCheduler
 
             // Third step: process task
             this->processTask(task_to_process);   
+
+            std::cout << this->abs_time << " " << task_to_process.priority << std::endl;
+
         }
         else
         {
             unsigned cur_priority = this->periodic_tasks.size();
             this->updateAcumulators(cur_priority);
+            std::cout << this->abs_time << " " << "idle" << std::endl;
         }
         
         // Forth step: advance time

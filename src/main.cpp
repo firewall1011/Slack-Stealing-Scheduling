@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unistd.h>
 #include "tasks/task.hpp"
 #include "tasks/taskbuilder.hpp"
 #include "schedulers/rateMonotonic.hpp"
@@ -17,11 +18,22 @@ int main(void){
         // scheduler.preloadTask(TaskBuilder::createPeriodicTask(0, 8, 4, 7));
 
         scheduler.prepareScheduler();
+
+        scheduler.start();
+
+        std::cout << "Iniciando..." << std::endl;
+
+        while(1)
+        {
+            scheduler.tick();
+            sleep(1);
+        }
+
     } 
     catch(const std::exception& ex) 
     { 
         std::cerr << ex.what() << std::endl;
     }
-    
+
     return EXIT_SUCCESS;
 }
