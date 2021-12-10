@@ -22,6 +22,9 @@ check:
 
 clear:
 	rm test.out main.out
-#g++ -o main.out src/utils/*.cpp src/tasks/*.cpp src/schedulers/*.cpp src/main.cpp
 
-#sou burro
+full:
+	make build
+	make check
+	make run
+	make clear
