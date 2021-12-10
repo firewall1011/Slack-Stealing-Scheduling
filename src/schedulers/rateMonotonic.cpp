@@ -53,11 +53,6 @@ namespace RTSSCheduler
             this->preloadTask(t);
     }
 
-    // Calcular Ai(t) para o hyperperiod (H), com i de todas prioridades (tasks).
-    // A cada começo de hyperperiodo reseta os acumuladores pra 0
-    // Criar um acumulador para cada nivel de prioridade Ii(t)
-    // Criar um acumulador para cada processamento aperiodico feito ap_acc
-
     void RateMonotonicScheduler::prepareScheduler()
     {
         // First step: order functions by period time (fixed priority)
@@ -78,10 +73,10 @@ namespace RTSSCheduler
         std::vector<unsigned> task_ready_work(H+2); 
         
         // Fourth step: do at the same time the computations of A*(t) to avoid useless storage :)
-        this->ap_proc_time_zero_H.resize(H+1);
+        this->ap_proc_times_zero_H.resize(H+1);
         this->ap_proc_time_per_level.resize(periodic_tasks.size());
         
-        std::fill(this->ap_proc_time_zero_H.begin(), this->ap_proc_time_zero_H.end(), std::numeric_limits<unsigned>::max());
+        std::fill(this->ap_proc_times_zero_H.begin(), this->ap_proc_times_zero_H.end(), std::numeric_limits<unsigned>::max());
 
         for(auto task: this->periodic_tasks)
         {
@@ -121,11 +116,11 @@ namespace RTSSCheduler
                 // Debug Ai(t) values
                 // std::cout << "t: " << t << "\tj:"<< j << "\tdead:" << task_deadline << "\tw:" << task_ready_work[task_deadline-1] << "\tAi:" << task_deadline - task_ready_work[task_deadline-1] << std::endl;
                 this->ap_proc_time_per_level[task.priority][t] = task_deadline - task_ready_work[task_deadline-1];
-                this->ap_proc_time_zero_H[t] = std::min(this->ap_proc_time_zero_H[t], this->ap_proc_time_per_level[task.priority][t]);
+                this->ap_proc_times_zero_H[t] = std::min(this->ap_proc_times_zero_H[t], this->ap_proc_time_per_level[task.priority][t]);
             }
 
             // Print A*t()
-            // for(auto slack: this->ap_proc_time_zero_H)
+            // for(auto slack: this->ap_proc_times_zero_H)
             //    std::cout << slack << " "; std::cout << std::endl;
 
             high_priority_ready_work = task_ready_work;
@@ -141,61 +136,109 @@ namespace RTSSCheduler
             periodic_arriving.push(periodic);
         }
         abs_time = 0;
+		
+		inactive_acumulators.resize(periodic_tasks.size());
     }
 
-    void RateMonotonicScheduler::tick()
-    {
-        // First step: add all ready tasks to processing queue
-        Task task = periodic_arriving.top();
-        while (task.arrival_time == abs_time)
+	void RateMonotonicScheduler::resetAcumulators()
+	{
+		std::fill(this->inactive_acumulators.begin(), this->inactive_acumulators.end(), 0);
+		ap_processing_acumulator = 0;
+	}
+
+	void RateMonotonicScheduler::updateProcessingQueues()
+	{
+		Task task = this->periodic_arriving.top();
+        while (task.arrival_time == this->abs_time)
         {
-            periodic_arriving.pop();
-            periodic_processing.push(task);
+            this->periodic_arriving.pop();
+            this->periodic_processing.push(task);
             
             task = periodic_arriving.top();
         }
 
-        task = aperiodic_arriving.top();
-        while (task.arrival_time == abs_time)
+        task = this->aperiodic_arriving.top();
+        while (task.arrival_time == this->abs_time)
         {
-            aperiodic_arriving.pop();
-            aperiodic_processing.push(task);
+            this->aperiodic_arriving.pop();
+            this->aperiodic_processing.push(task);
             
-            task = aperiodic_arriving.top();
+            task = this->aperiodic_arriving.top();
         }
-        
-        // Second step: choose task to process
-        Task task_to_process = aperiodic_processing.top();
+	}
+
+	Task RateMonotonicScheduler::chooseTaskToProcess()
+	{
+		Task task = aperiodic_processing.top();
         
         unsigned earliest_deadline = 0;
-        bool enough_ap_processing = _getAperiodicProcessingTime(task_to_process, abs_time, earliest_deadline) > 0;
+        bool enough_ap_processing = _getAperiodicProcessingTime(task, abs_time, earliest_deadline) > 0;
         
         if (aperiodic_processing.empty() || !enough_ap_processing)
         {
-            task_to_process = periodic_processing.top();
+            task = periodic_processing.top();
         }
 
-        // Third step: process task
-        bool doneProcessing = task_to_process.compute();
-        
-        // Forth step: remove task from queue if done
+		return task;
+	}
+	
+	void RateMonotonicScheduler::updateAcumulators(const Task& task)
+	{
+		if(!task.isPeriodic())
+		{
+			ap_processing_acumulator += 1;
+		}
+		else
+		{
+			for(int i = task.priority-1; i >= 0; i--)
+			{
+				inactive_acumulators[i] += 1;
+			}
+		}
+	}
+	
+	void RateMonotonicScheduler::processTask(Task& task)
+	{
+		bool doneProcessing = task.compute();
+
+		this->updateAcumulators(task);
+		
+
+        // remove task from queue if done
         if(doneProcessing)
         {
             if(task.isPeriodic())
             {
-                periodic_processing.pop();
-                task_to_process.computed = 0;
-                task_to_process.arrival_time += task_to_process.period;
-                periodic_arriving.push(task_to_process);
+                this->periodic_processing.pop();
+                task.computed = 0;
+                task.arrival_time += task.period;
+                this->periodic_arriving.push(task);
             }
             else
             {
-                aperiodic_processing.pop();
+                this->aperiodic_processing.pop();
             }
         }
+	}
+
+    void RateMonotonicScheduler::tick()
+    {
+		// if at the beginning of a hyperperiod, reset acumulators
+		if(this->abs_time == 0)
+			this->resetAcumulators();
+
+        // First step: add all ready tasks to processing queue
+        this->updateProcessingQueues();
         
-        // Fifth step: advance time
-        abs_time += 1;
+        // Second step: choose task to process
+        Task task_to_process = this->chooseTaskToProcess();
+
+        // Third step: process task
+		this->processTask(task_to_process);
+        
+        // Forth step: advance time
+        this->abs_time++;
+		this->abs_time %= this->H;
     }
 
     void RateMonotonicScheduler::addOnlineTask(Task t)

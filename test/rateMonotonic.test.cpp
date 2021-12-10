@@ -39,11 +39,11 @@ TEST_CASE("RateMonotonicScheduler test") {
 		scheduler.preloadTask(taskB);
 		scheduler.prepareScheduler();
 		
-		REQUIRE(scheduler.ap_proc_time_zero_H.size() == sizeof(expected) / sizeof(unsigned));
+		REQUIRE(scheduler.ap_proc_times_zero_H.size() == sizeof(expected) / sizeof(unsigned));
 		
-		for(int i = 0; i < scheduler.ap_proc_time_zero_H.size(); i++)
+		for(int i = 0; i < scheduler.ap_proc_times_zero_H.size(); i++)
 		{
-			CHECK(scheduler.ap_proc_time_zero_H[i] == expected[i]);
+			CHECK(scheduler.ap_proc_times_zero_H[i] == expected[i]);
 		}
 	}
 

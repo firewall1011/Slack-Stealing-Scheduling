@@ -24,7 +24,11 @@ namespace RTSSCheduler
             // Constructor
             RateMonotonicScheduler() {}
 
-        private:
+            std::vector<unsigned> ap_proc_times_zero_H;	// a.k.a A*(t)
+            std::vector<std::vector<unsigned>> ap_proc_time_per_level;	// a.k.a Ai(t)
+            unsigned ap_processing_available;	// a.k.a last calculated A*(s, t)
+        
+		private:
             // Parameters
             unsigned H = 1; // hyperperiodo (a.k.a LCM from periods)
             unsigned abs_time = 0; // absolute time in timeline
@@ -38,9 +42,14 @@ namespace RTSSCheduler
             std::priority_queue<Task> periodic_processing;  // order by priority
             std::priority_queue<Task> aperiodic_processing; // order by priority
 
-		public:
-            std::vector<unsigned> ap_proc_time_zero_H;      // a.k.a A*(t)
-            std::vector<std::vector<unsigned>> ap_proc_time_per_level;   // a.k.a Ai(t)
-            unsigned ap_processing_available;               // a.k.a last calculated A*(s, t)
+			unsigned ap_processing_acumulator;
+			std::vector<unsigned> inactive_acumulators;
+		
+			void resetAcumulators();
+			void updateProcessingQueues();
+			Task chooseTaskToProcess();
+			void processTask(Task& task);
+			void updateAcumulators(const Task& task);
+			void updateAperiodicProcessingAvailable();
     };
 }
