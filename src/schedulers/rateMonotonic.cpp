@@ -26,11 +26,6 @@ unsigned _getPeriodicInstanceDeadline(const Task& task, unsigned j)
     return (task.arrival_time + task.period*(j-1)) + task.deadline;
 }
 
-void _emptyQueue(std::priority_queue<Task>& queue)
-{
-    while(!queue.empty()) queue.pop();
-}
-
 namespace RTSSCheduler 
 {
     // Pré-configurantions: Task Initialization
@@ -139,7 +134,8 @@ namespace RTSSCheduler
     // Running Scheduler
     void RateMonotonicScheduler::start()
     {
-        _emptyQueue(periodic_arriving);
+		while(!periodic_arriving.empty()) periodic_arriving.pop();
+
         for (const Task& periodic : periodic_tasks)
         {
             periodic_arriving.push(periodic);

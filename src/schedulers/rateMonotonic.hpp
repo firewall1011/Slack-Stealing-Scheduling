@@ -8,6 +8,22 @@ using namespace RTSTasks;
 
 namespace RTSSCheduler 
 {
+	struct OrderTaskByPriority
+	{
+		bool operator() (Task a, Task b)
+		{
+			return a.priority < b.priority;
+		}
+	};
+
+	struct OrderTaskByArrivalTime
+	{
+		bool operator() (Task a, Task b)
+		{
+			return a.arrival_time < b.arrival_time;
+		}
+	};
+
     class RateMonotonicScheduler : public BaseScheduler
     {   
         public:
@@ -36,11 +52,11 @@ namespace RTSSCheduler
             // Containers
             std::vector<Task> periodic_tasks;
 
-            std::priority_queue<Task> periodic_arriving; // order by arrival time
-            std::priority_queue<Task> aperiodic_arriving;   // order by arrival time
+            std::priority_queue<Task, std::vector<Task>, OrderTaskByArrivalTime> periodic_arriving; // order by arrival time
+            std::priority_queue<Task, std::vector<Task>, OrderTaskByArrivalTime> aperiodic_arriving;   // order by arrival time
             
-            std::priority_queue<Task> periodic_processing;  // order by priority
-            std::priority_queue<Task> aperiodic_processing; // order by priority
+            std::priority_queue<Task, std::vector<Task>, OrderTaskByPriority> periodic_processing;  // order by priority
+            std::priority_queue<Task, std::vector<Task>, OrderTaskByPriority> aperiodic_processing; // order by priority
 
             // Acumulators
 			unsigned ap_processing_acumulator;
