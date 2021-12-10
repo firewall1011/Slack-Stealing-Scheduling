@@ -52,6 +52,7 @@ namespace RTSSCheduler
 			Task chooseTaskToProcess();
 			void processTask(Task& task);
 			void updateAcumulators(const Task& task);
+            void updateAcumulators(unsigned cur_priority);
 			void updateAperiodicProcessingAvailable();
     };
 }

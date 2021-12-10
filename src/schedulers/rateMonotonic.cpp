@@ -26,11 +26,6 @@ unsigned _getPeriodicInstanceDeadline(const Task& task, unsigned j)
     return (task.arrival_time + task.period*(j-1)) + task.deadline;
 }
 
-unsigned _getAperiodicProcessingTime(const Task& task, unsigned s, unsigned t)
-{
-    return 0; // TODO: it's just mocked
-}
-
 void _emptyQueue(std::priority_queue<Task>& queue)
 {
     while(!queue.empty()) queue.pop();
@@ -132,13 +127,14 @@ namespace RTSSCheduler
     {
         unsigned min = std::numeric_limits<unsigned>::max();
      
-        for (int i = 0; i < this->periodic_processing.size(); i++)
+        for (int i = 0; i < this->periodic_tasks.size(); i++)
         {
             min = std::min(this->ap_proc_time_per_level[i][t] - inactive_acumulators[i] - ap_processing_acumulator, min);
         }        
 
         return min;
-    } 
+    }
+    
 
     // Running Scheduler
     void RateMonotonicScheduler::start()
@@ -182,12 +178,17 @@ namespace RTSSCheduler
 
 	Task RateMonotonicScheduler::chooseTaskToProcess()
 	{
+
+        if(aperiodic_processing.empty())
+        {
+            return periodic_processing.top();
+        }
+
 		Task task = aperiodic_processing.top();
+
+        bool enough_ap_processing = getSlackTimeAvaiable(this->abs_time+1) > 0;
         
-        unsigned earliest_deadline = 0;
-        bool enough_ap_processing = _getAperiodicProcessingTime(task, abs_time, earliest_deadline) > 0;
-        
-        if (aperiodic_processing.empty() || !enough_ap_processing)
+        if (!enough_ap_processing)
         {
             task = periodic_processing.top();
         }
@@ -208,6 +209,14 @@ namespace RTSSCheduler
 				inactive_acumulators[i] += 1;
 			}
 		}
+	}
+
+    void RateMonotonicScheduler::updateAcumulators(unsigned cur_priority)
+	{
+        for(int i = cur_priority-1; i >= 0; i--)
+        {
+            inactive_acumulators[i] += 1;
+        }
 	}
 	
 	void RateMonotonicScheduler::processTask(Task& task)
@@ -236,6 +245,7 @@ namespace RTSSCheduler
 
     void RateMonotonicScheduler::tick()
     {
+
 		// if at the beginning of a hyperperiod, reset acumulators
 		if(this->abs_time == 0)
 			this->resetAcumulators();
@@ -243,15 +253,24 @@ namespace RTSSCheduler
         // First step: add all ready tasks to processing queue
         this->updateProcessingQueues();
         
-        // Second step: choose task to process
-        Task task_to_process = this->chooseTaskToProcess();
+        if (!this->aperiodic_processing.empty() || !this->periodic_processing.empty())
+        {
+            // Second step: choose task to process
+            Task task_to_process = this->chooseTaskToProcess();
 
-        // Third step: process task
-		this->processTask(task_to_process);
+            // Third step: process task
+            this->processTask(task_to_process);   
+        }
+        else
+        {
+            unsigned cur_priority = this->periodic_tasks.size();
+            this->updateAcumulators(cur_priority);
+        }
         
         // Forth step: advance time
         this->abs_time++;
 		this->abs_time %= this->H;
+        
     }
 
     void RateMonotonicScheduler::addOnlineTask(Task t)
