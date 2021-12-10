@@ -116,6 +116,7 @@ namespace RTSSCheduler
                 // Debug Ai(t) values
                 // std::cout << "t: " << t << "\tj:"<< j << "\tdead:" << task_deadline << "\tw:" << task_ready_work[task_deadline-1] << "\tAi:" << task_deadline - task_ready_work[task_deadline-1] << std::endl;
                 this->ap_proc_time_per_level[task.priority][t] = task_deadline - task_ready_work[task_deadline-1];
+                // This is A*(t)
                 this->ap_proc_times_zero_H[t] = std::min(this->ap_proc_times_zero_H[t], this->ap_proc_time_per_level[task.priority][t]);
             }
 
@@ -126,6 +127,18 @@ namespace RTSSCheduler
             high_priority_ready_work = task_ready_work;
         } 
     }
+
+    int RateMonotonicScheduler::getSlackTimeAvaiable(unsigned t)
+    {
+        unsigned min = std::numeric_limits<unsigned>::max();
+     
+        for (int i = 0; i < this->periodic_processing.size(); i++)
+        {
+            min = std::min(this->ap_proc_time_per_level[i][t] - inactive_acumulators[i] - ap_processing_acumulator, min);
+        }        
+
+        return min;
+    } 
 
     // Running Scheduler
     void RateMonotonicScheduler::start()

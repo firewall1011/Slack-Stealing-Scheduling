@@ -42,9 +42,11 @@ namespace RTSSCheduler
             std::priority_queue<Task> periodic_processing;  // order by priority
             std::priority_queue<Task> aperiodic_processing; // order by priority
 
+            // Acumulators
 			unsigned ap_processing_acumulator;
 			std::vector<unsigned> inactive_acumulators;
 		
+            int getSlackTimeAvaiable(unsigned t);
 			void resetAcumulators();
 			void updateProcessingQueues();
 			Task chooseTaskToProcess();
