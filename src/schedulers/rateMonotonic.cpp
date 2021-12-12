@@ -248,7 +248,6 @@ namespace RTSSCheduler
 				new_task.job_instance += 1;
 				this->periodic_arriving.push(new_task);
 			}
-			std::cout << "done processing" << std::endl;
 		}
 	}
 
@@ -267,7 +266,7 @@ namespace RTSSCheduler
 		std::cout << "periodic processing size: " << this->periodic_processing.size() << std::endl;
 		std::cout << "aperiodic processing size: " << this->aperiodic_processing.size() << std::endl;
         
-		std::cout << "Tempo:" << this->abs_time << std::endl;
+		std::cout << "Time:" << this->abs_time << " | Relative time:" << this->abs_time % this->H << std::endl;
         if (!this->aperiodic_processing.empty() || !this->periodic_processing.empty())
         {
             // Second step: choose task to process

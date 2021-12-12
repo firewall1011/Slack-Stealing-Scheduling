@@ -21,7 +21,7 @@ int main(void){
 
         scheduler.start();
 
-        std::cout << "Iniciando..." << std::endl;
+        std::cout << "Starting scheduler..." << std::endl;
 
         while(true)
         {
