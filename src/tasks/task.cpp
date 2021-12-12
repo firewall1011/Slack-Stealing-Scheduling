@@ -51,4 +51,28 @@ namespace RTSTasks
 
         return a.period <= b.period;
     }
+
+	std::ostream& printPeriodicTask(std::ostream& os, const Task& t)
+	{
+		return os << "Task:" << t.job_instance
+			<< " priority:" << t.priority
+			<< " computed:" << t.computed << "/" << t.computation_cost
+			<< " period:" << t.period
+			<< " arrival:" << t.arrival_time
+			<< " deadline:" << t.deadline
+			<< " is Periodic";
+	}
+	
+	std::ostream& printAperiodicTask(std::ostream& os, const Task& t)
+	{
+		return os << "Task:"
+			<< " computed:" << t.computed << "/" << t.computation_cost
+			<< " arrival:" << t.arrival_time
+			<< " is Aperiodic";
+	}
+
+	std::ostream& operator<<(std::ostream& os, const Task& t)
+	{
+		return t.isPeriodic() ? printPeriodicTask(os, t) : printAperiodicTask(os, t);
+	}
 }

@@ -26,25 +26,21 @@ unsigned _getPeriodicInstanceDeadline(const Task& task, unsigned j)
     return (task.arrival_time + task.period*(j-1)) + task.deadline;
 }
 
-unsigned _getAperiodicProcessingTime(const Task& task, unsigned s, unsigned t)
-{
-    return 0; // TODO: it's just mocked
-}
-
-void _emptyQueue(std::priority_queue<Task>& queue)
-{
-    while(!queue.empty()) queue.pop();
-}
-
 namespace RTSSCheduler 
 {
     // Pré-configurantions: Task Initialization
     void RateMonotonicScheduler::preloadTask(Task t)
     {   
-        if(!t.isPeriodic())
-            throw std::runtime_error(std::string("Rate Monotonic Scheduler: RTS only accepts periodic tasks."));
+        //if(!t.isPeriodic())
+        //    throw std::runtime_error(std::string("Rate Monotonic Scheduler: RTS only accepts periodic tasks."));
+        if(t.isPeriodic())
+            this->periodic_tasks.push_back(t);
         
-        this->periodic_tasks.push_back(t);
+        else
+        {
+            t.priority = 0;
+            this->aperiodic_arriving.push(t);
+        }
     }
             
     void RateMonotonicScheduler::preloadTask(std::vector<Task> tasks)
@@ -52,11 +48,6 @@ namespace RTSSCheduler
         for(auto t: tasks)
             this->preloadTask(t);
     }
-
-    // Calcular Ai(t) para o hyperperiod (H), com i de todas prioridades (tasks).
-    // A cada começo de hyperperiodo reseta os acumuladores pra 0
-    // Criar um acumulador para cada nivel de prioridade Ii(t)
-    // Criar um acumulador para cada processamento aperiodico feito ap_acc
 
     void RateMonotonicScheduler::prepareScheduler()
     {
@@ -78,10 +69,10 @@ namespace RTSSCheduler
         std::vector<unsigned> task_ready_work(H+2); 
         
         // Fourth step: do at the same time the computations of A*(t) to avoid useless storage :)
-        this->ap_proc_time_zero_H.resize(H+1);
+        this->ap_proc_times_zero_H.resize(H+1);
         this->ap_proc_time_per_level.resize(periodic_tasks.size());
         
-        std::fill(this->ap_proc_time_zero_H.begin(), this->ap_proc_time_zero_H.end(), std::numeric_limits<unsigned>::max());
+        std::fill(this->ap_proc_times_zero_H.begin(), this->ap_proc_times_zero_H.end(), std::numeric_limits<unsigned>::max());
 
         for(auto task: this->periodic_tasks)
         {
@@ -121,81 +112,181 @@ namespace RTSSCheduler
                 // Debug Ai(t) values
                 // std::cout << "t: " << t << "\tj:"<< j << "\tdead:" << task_deadline << "\tw:" << task_ready_work[task_deadline-1] << "\tAi:" << task_deadline - task_ready_work[task_deadline-1] << std::endl;
                 this->ap_proc_time_per_level[task.priority][t] = task_deadline - task_ready_work[task_deadline-1];
-                this->ap_proc_time_zero_H[t] = std::min(this->ap_proc_time_zero_H[t], this->ap_proc_time_per_level[task.priority][t]);
+                // This is A*(t)
+                this->ap_proc_times_zero_H[t] = std::min(this->ap_proc_times_zero_H[t], this->ap_proc_time_per_level[task.priority][t]);
             }
 
             // Print A*t()
-            // for(auto slack: this->ap_proc_time_zero_H)
+            // for(auto slack: this->ap_proc_times_zero_H)
             //    std::cout << slack << " "; std::cout << std::endl;
 
             high_priority_ready_work = task_ready_work;
         } 
     }
 
+    int RateMonotonicScheduler::getSlackTimeAvaiable(unsigned t)
+    {
+        unsigned min = std::numeric_limits<unsigned>::max();
+     
+        for (int i = 0; i < this->periodic_tasks.size(); i++)
+        {
+        	//std::cout << "ap_proc_time:" << this->ap_proc_time_per_level[i][t] << " Ap_acc:" << ap_processing_acumulator << " Inactive:" << inactive_acumulators[i] << std::endl;
+			min = std::min(this->ap_proc_time_per_level[i][t] - inactive_acumulators[i] - ap_processing_acumulator, min);
+            //std::cout << min << std::endl;
+		}        
+
+        return min;
+    }
+    
+
     // Running Scheduler
     void RateMonotonicScheduler::start()
     {
-        _emptyQueue(periodic_arriving);
+		while(!periodic_arriving.empty()) periodic_arriving.pop();
+
         for (const Task& periodic : periodic_tasks)
         {
             periodic_arriving.push(periodic);
         }
         abs_time = 0;
+		
+		inactive_acumulators.resize(periodic_tasks.size());
     }
+
+	void RateMonotonicScheduler::resetAcumulators()
+	{
+		std::fill(this->inactive_acumulators.begin(), this->inactive_acumulators.end(), 0);
+		ap_processing_acumulator = 0;
+	}
+
+	void RateMonotonicScheduler::updateProcessingQueues()
+	{   
+		while(!this->periodic_arriving.empty() && this->periodic_arriving.top().arrival_time == this->abs_time)
+        {
+            Task task = this->periodic_arriving.top();
+			this->periodic_arriving.pop();
+			this->periodic_processing.push(task);
+        }
+
+		while(!this->aperiodic_arriving.empty() && this->aperiodic_arriving.top().arrival_time == this->abs_time)
+        {
+            Task task = this->aperiodic_arriving.top();
+			this->aperiodic_arriving.pop();
+			this->aperiodic_processing.push(task);
+        }
+	}
+
+	Task RateMonotonicScheduler::chooseTaskToProcess()
+	{
+        Task task = this->periodic_processing.top();
+		if(aperiodic_processing.empty())
+        {
+			this->periodic_processing.pop();
+            return task;
+        }
+
+		int slackTimeAvailable = getSlackTimeAvaiable(this->abs_time % this->H);
+        std::cout << "Slack Time Available: " << slackTimeAvailable << std::endl;
+
+		bool enough_ap_processing = slackTimeAvailable > 0;
+        if (!enough_ap_processing)
+        {
+			this->periodic_processing.pop();
+			return task;
+        }
+
+		task = aperiodic_processing.top();
+		this->aperiodic_processing.pop();
+		return task;
+	}
+	
+	void RateMonotonicScheduler::updateAcumulators(const Task& task)
+	{
+		if(!task.isPeriodic())
+		{
+			ap_processing_acumulator += 1;
+		}
+		else
+		{
+			for(int i = task.priority-1; i >= 0; i--)
+			{
+				inactive_acumulators[i] += 1;
+			}
+		}
+	}
+
+    void RateMonotonicScheduler::updateAcumulators(unsigned cur_priority)
+	{
+        for(int i = cur_priority-1; i >= 0; i--)
+        {
+            inactive_acumulators[i] += 1;
+        }
+	}
+	
+	void RateMonotonicScheduler::processTask(Task& task)
+	{
+		bool doneProcessing = task.compute();
+
+		this->updateAcumulators(task);
+        
+		if(!doneProcessing)
+        {
+            if (task.isPeriodic())
+				this->periodic_processing.push(task);
+            else
+                this->aperiodic_processing.push(task);
+        }
+		else
+		{
+			if(task.isPeriodic())
+			{
+				Task new_task = task;
+				new_task.arrival_time += new_task.period;
+				new_task.computed = 0;
+				new_task.finish_time = 0;
+				new_task.response_time = 0;
+				new_task.job_instance += 1;
+				this->periodic_arriving.push(new_task);
+			}
+			std::cout << "done processing" << std::endl;
+		}
+	}
 
     void RateMonotonicScheduler::tick()
     {
+		// if at the beginning of a hyperperiod, reset acumulators
+		if(this->abs_time % this->H == 0)
+        {
+			this->resetAcumulators();
+        }
+
         // First step: add all ready tasks to processing queue
-        Task task = periodic_arriving.top();
-        while (task.arrival_time == abs_time)
+        this->updateProcessingQueues();
+		std::cout << "periodic arriving size: " << this->periodic_arriving.size() << std::endl;
+		std::cout << "aperiodic arriving size: " << this->aperiodic_arriving.size() << std::endl;
+		std::cout << "periodic processing size: " << this->periodic_processing.size() << std::endl;
+		std::cout << "aperiodic processing size: " << this->aperiodic_processing.size() << std::endl;
+        
+		std::cout << "Tempo:" << this->abs_time << std::endl;
+        if (!this->aperiodic_processing.empty() || !this->periodic_processing.empty())
         {
-            periodic_arriving.pop();
-            periodic_processing.push(task);
-            
-            task = periodic_arriving.top();
-        }
+            // Second step: choose task to process
+            Task task_to_process = this->chooseTaskToProcess();
 
-        task = aperiodic_arriving.top();
-        while (task.arrival_time == abs_time)
-        {
-            aperiodic_arriving.pop();
-            aperiodic_processing.push(task);
-            
-            task = aperiodic_arriving.top();
-        }
-        
-        // Second step: choose task to process
-        Task task_to_process = aperiodic_processing.top();
-        
-        unsigned earliest_deadline = 0;
-        bool enough_ap_processing = _getAperiodicProcessingTime(task_to_process, abs_time, earliest_deadline) > 0;
-        
-        if (aperiodic_processing.empty() || !enough_ap_processing)
-        {
-            task_to_process = periodic_processing.top();
-        }
+            // Third step: process task
+            this->processTask(task_to_process);   
 
-        // Third step: process task
-        bool doneProcessing = task_to_process.compute();
-        
-        // Forth step: remove task from queue if done
-        if(doneProcessing)
+            std::cout << "Processed: " << task_to_process << std::endl;
+        }
+        else
         {
-            if(task.isPeriodic())
-            {
-                periodic_processing.pop();
-                task_to_process.computed = 0;
-                task_to_process.arrival_time += task_to_process.period;
-                periodic_arriving.push(task_to_process);
-            }
-            else
-            {
-                aperiodic_processing.pop();
-            }
+            unsigned cur_priority = this->periodic_tasks.size();
+            this->updateAcumulators(cur_priority);
+            std::cout << "Processor idle" << std::endl;
         }
         
-        // Fifth step: advance time
-        abs_time += 1;
+        // Fourth step: advance time
+        this->abs_time++;
     }
 
     void RateMonotonicScheduler::addOnlineTask(Task t)

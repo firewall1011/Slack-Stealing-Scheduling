@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 namespace RTSTasks 
 {   
     class Task
@@ -36,6 +38,8 @@ namespace RTSTasks
             {
                 return this->arrival_time < other.arrival_time;
             }
+			
+			friend std::ostream& operator<<(std::ostream& os, const Task& t);
     };
 
     bool sortTaskByEarliestDeadline(const Task& a, const Task& b);
