@@ -23,10 +23,10 @@ int main(void){
 
         std::cout << "Iniciando..." << std::endl;
 
-        while(1)
+        while(true)
         {
             scheduler.tick();
-            sleep(1);
+            std::cin.get();
         }
 
     } 
