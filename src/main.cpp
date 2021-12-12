@@ -1,23 +1,39 @@
-#include "slack-stealing.h"
 #include <iostream>
+#include <unistd.h>
+#include "tasks/task.hpp"
+#include "tasks/taskbuilder.hpp"
+#include "schedulers/rateMonotonic.hpp"
 
-int main()
-{
-	using namespace std;
-	using namespace SlackStealing;
-	
-	vector<Task> list_tasks;
+using namespace RTSTasks;
+using namespace RTSSCheduler;
 
-	list_tasks.push_back(Task(1, 1, 0, 4, 1));
-	list_tasks.push_back(Task(3, 6, 0, 6, 2));
+int main(void){
 
-	vector<int> A_star = aperiodic_free_time(12, list_tasks);
+    try 
+    { 
+        RateMonotonicScheduler scheduler;
 
-	cout << "\n\n===== MAIN ====\n\n";
-	cout << "A*: ";
-	for (int i = 0; i < A_star.size(); i++)
-	{
-		cout << A_star[i] << " ";
-	}
-	cout << "\n\n";
+        scheduler.preloadTask(TaskBuilder::createPeriodicTask(0, 4, 1, 1));
+        scheduler.preloadTask(TaskBuilder::createPeriodicTask(0, 6, 3, 6));
+        scheduler.preloadTask(TaskBuilder::createTask(3, 4));
+
+        scheduler.prepareScheduler();
+
+        scheduler.start();
+
+        std::cout << "Starting scheduler..." << std::endl;
+
+        while(true)
+        {
+            scheduler.tick();
+            std::cin.get();
+        }
+
+    } 
+    catch(const std::exception& ex) 
+    { 
+        std::cerr << ex.what() << std::endl;
+    }
+
+    return EXIT_SUCCESS;
 }
