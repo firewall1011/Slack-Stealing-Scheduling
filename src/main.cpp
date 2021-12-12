@@ -15,7 +15,7 @@ int main(void){
 
         scheduler.preloadTask(TaskBuilder::createPeriodicTask(0, 4, 1, 1));
         scheduler.preloadTask(TaskBuilder::createPeriodicTask(0, 6, 3, 6));
-        // scheduler.preloadTask(TaskBuilder::createPeriodicTask(0, 8, 4, 7));
+        scheduler.preloadTask(TaskBuilder::createTask(3, 4));
 
         scheduler.prepareScheduler();
 

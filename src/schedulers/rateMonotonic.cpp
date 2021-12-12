@@ -31,10 +31,16 @@ namespace RTSSCheduler
     // Pré-configurantions: Task Initialization
     void RateMonotonicScheduler::preloadTask(Task t)
     {   
-        if(!t.isPeriodic())
-            throw std::runtime_error(std::string("Rate Monotonic Scheduler: RTS only accepts periodic tasks."));
+        //if(!t.isPeriodic())
+        //    throw std::runtime_error(std::string("Rate Monotonic Scheduler: RTS only accepts periodic tasks."));
+        if(t.isPeriodic())
+            this->periodic_tasks.push_back(t);
         
-        this->periodic_tasks.push_back(t);
+        else
+        {
+            t.priority = 0;
+            this->aperiodic_arriving.push(t);
+        }
     }
             
     void RateMonotonicScheduler::preloadTask(std::vector<Task> tasks)
@@ -152,24 +158,51 @@ namespace RTSSCheduler
 	}
 
 	void RateMonotonicScheduler::updateProcessingQueues()
-	{
-		Task task = this->periodic_arriving.top();
-        while (task.arrival_time == this->abs_time)
+	{    
+        if (periodic_arriving.size() > 0)
         {
-            this->periodic_arriving.pop();
-            this->periodic_processing.push(task);
-            
-            task = periodic_arriving.top();
+            Task task = this->periodic_arriving.top();
+            while (task.arrival_time == this->abs_time)
+            {
+                this->periodic_arriving.pop();
+                this->periodic_processing.push(task);
+                
+                task.arrival_time = task.arrival_time + task.period;
+                task.finish_time = 0;
+                task.response_time = 0;
+                task.job_instance = 0;
+                this->periodic_arriving.push(task);
+
+                if (periodic_arriving.size() > 0)
+                {
+                    task = periodic_arriving.top();
+                }
+                else
+                {
+                    break;
+                }
+            }
         }
 
-        task = this->aperiodic_arriving.top();
-        while (task.arrival_time == this->abs_time)
+        if (aperiodic_arriving.size() > 0)
         {
-            this->aperiodic_arriving.pop();
-            this->aperiodic_processing.push(task);
-            
-            task = this->aperiodic_arriving.top();
+            Task task = this->aperiodic_arriving.top();
+            while (task.arrival_time == this->abs_time)
+            {
+                this->aperiodic_arriving.pop();
+                this->aperiodic_processing.push(task);
+                
+                if (aperiodic_arriving.size() > 0)
+                {
+                    task = this->aperiodic_arriving.top();
+                }
+                else
+                {
+                    break;
+                }  
+            }
         }
+
 	}
 
 	Task RateMonotonicScheduler::chooseTaskToProcess()
@@ -220,7 +253,6 @@ namespace RTSSCheduler
 		bool doneProcessing = task.compute();
 
 		this->updateAcumulators(task);
-		
 
         // remove task from queue if done
         if(doneProcessing)
@@ -228,13 +260,24 @@ namespace RTSSCheduler
             if(task.isPeriodic())
             {
                 this->periodic_processing.pop();
-                task.computed = 0;
-                task.arrival_time += task.period;
-                this->periodic_arriving.push(task);
             }
             else
             {
                 this->aperiodic_processing.pop();
+            }
+        }
+
+        else
+        {
+            if (task.isPeriodic())
+            {
+                this->periodic_processing.pop();
+                this->periodic_processing.push(task);
+            }
+            else
+            {
+                this->aperiodic_processing.pop();
+                this->aperiodic_processing.push(task);
             }
         }
 	}
@@ -244,7 +287,10 @@ namespace RTSSCheduler
 
 		// if at the beginning of a hyperperiod, reset acumulators
 		if(this->abs_time == 0)
+        {
+            this->start();
 			this->resetAcumulators();
+        }
 
         // First step: add all ready tasks to processing queue
         this->updateProcessingQueues();
@@ -257,14 +303,14 @@ namespace RTSSCheduler
             // Third step: process task
             this->processTask(task_to_process);   
 
-            std::cout << this->abs_time << " " << task_to_process.priority << std::endl;
+            std::cout << "Tempo:" << this->abs_time << " Pri:" << task_to_process.priority << " Comp:" << task_to_process.computed << " isP:"<< task_to_process.isPeriodic() << std::endl;
 
         }
         else
         {
             unsigned cur_priority = this->periodic_tasks.size();
             this->updateAcumulators(cur_priority);
-            std::cout << this->abs_time << " " << "idle" << std::endl;
+            std::cout << "Tempo:" << this->abs_time << "Tarefa:" << "idle" << std::endl;
         }
         
         // Forth step: advance time

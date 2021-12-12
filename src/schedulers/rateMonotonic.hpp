@@ -12,7 +12,7 @@ namespace RTSSCheduler
 	{
 		bool operator() (Task a, Task b)
 		{
-			return a.priority < b.priority;
+			return a.priority > b.priority;
 		}
 	};
 
@@ -20,7 +20,7 @@ namespace RTSSCheduler
 	{
 		bool operator() (Task a, Task b)
 		{
-			return a.arrival_time < b.arrival_time;
+			return a.arrival_time > b.arrival_time;
 		}
 	};
 
