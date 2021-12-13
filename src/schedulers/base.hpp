@@ -13,10 +13,6 @@ namespace RTSSCheduler
             // Utilities Flags
             bool FLAG_DEBUG = false;
             
-            // Usefull variables
-            unsigned T = 0;
-            unsigned TIME_FAULTS = 0;
-            
             // Pré-configurantions: Task Initialization
             virtual void preloadTask(Task t) = 0;
             
