@@ -1,19 +1,19 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
-#include "schedulers/rateMonotonic.hpp"
+#include "schedulers/slackStealing.hpp"
 #include "tasks/taskbuilder.hpp"
 
 using namespace RTSSCheduler;
 using namespace RTSTasks;
 
-TEST_CASE("RateMonotonicScheduler test") {
+TEST_CASE("SlackStealingScheduler test") {
 	
-	auto taskA = TaskBuilder::createPeriodicTask(0, 4, 1, 1);
-	auto taskB = TaskBuilder::createPeriodicTask(0, 6, 3, 6);
+	auto taskA = TaskBuilder::createPeriodicTask(0, 1, 4, 1);
+	auto taskB = TaskBuilder::createPeriodicTask(0, 3, 6, 6);
 	
 	SUBCASE("Preload feasible set of tasks doesn't throw exception") {
-		RateMonotonicScheduler scheduler;
+		SlackStealingScheduler scheduler;
 		scheduler.preloadTask(taskA);
 		scheduler.preloadTask(taskB);
 
@@ -21,7 +21,7 @@ TEST_CASE("RateMonotonicScheduler test") {
 	}
 
 	SUBCASE("Preload infeasible set of tasks throws exception") {
-		RateMonotonicScheduler scheduler;
+		SlackStealingScheduler scheduler;
 		scheduler.preloadTask(taskA);
 		scheduler.preloadTask(taskB);
 		scheduler.preloadTask(taskB);
@@ -34,7 +34,7 @@ TEST_CASE("RateMonotonicScheduler test") {
 	SUBCASE("A*(t) calculation") {
 		unsigned expected[13] {0, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3}; 
 		
-		RateMonotonicScheduler scheduler;
+		SlackStealingScheduler scheduler;
 		scheduler.preloadTask(taskA);
 		scheduler.preloadTask(taskB);
 		scheduler.prepareScheduler();
@@ -51,7 +51,7 @@ TEST_CASE("RateMonotonicScheduler test") {
 		unsigned expected_A[13] {0, 3, 3, 3, 3, 6, 6, 6, 6, 9, 9, 9, 9}; 
 		unsigned expected_B[13] {1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3}; 
 		
-		RateMonotonicScheduler scheduler;
+		SlackStealingScheduler scheduler;
 		scheduler.preloadTask(taskA);
 		scheduler.preloadTask(taskB);
 		scheduler.prepareScheduler();

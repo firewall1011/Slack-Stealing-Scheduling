@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "../tasks/task.hpp"
+#include "../tasks/sortingStrategies.hpp"
 
 using namespace RTSTasks;
 
@@ -11,10 +12,6 @@ namespace RTSSCheduler
         public:
             // Utilities Flags
             bool FLAG_DEBUG = false;
-            
-            // Usefull variables
-            unsigned T = 0;
-            unsigned TIME_FAULTS = 0;
             
             // Pré-configurantions: Task Initialization
             virtual void preloadTask(Task t) = 0;
@@ -30,4 +27,20 @@ namespace RTSSCheduler
 
             virtual void addOnlineTask(Task t) = 0;
     };
+
+    struct OrderTaskByPriority
+	{
+		bool operator() (Task a, Task b)
+		{
+			return a.priority > b.priority;
+		}
+	};
+
+	struct OrderTaskByArrivalTime
+	{
+		bool operator() (Task a, Task b)
+		{
+			return a.arrival_time > b.arrival_time;
+		}
+	};
 }

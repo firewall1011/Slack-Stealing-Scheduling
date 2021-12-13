@@ -2,7 +2,7 @@ MAIN_TARGETS := $(wildcard src/*/*.cpp src/*.cpp)
 TEST_TARGETS := $(wildcard src/*/*.cpp test/*.cpp test/*/*.cpp)
 
 INCLUDE_FILES = -Isrc
-CXXFLAGS = -std=c++17
+CXXFLAGS = -std=c++17 -g
 
 build:
 	make compile_test
@@ -28,3 +28,6 @@ full:
 	make check
 	make run
 	make clear
+
+case: 
+	(cat cases/$(filename) && cat) | ./main.out

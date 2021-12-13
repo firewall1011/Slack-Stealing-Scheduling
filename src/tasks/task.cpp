@@ -2,6 +2,7 @@
 
 namespace RTSTasks 
 {
+    // Default Constructor
     Task::Task(unsigned arrival_time, unsigned computation_cost, unsigned deadline, unsigned finish_time, unsigned response_time, unsigned period, unsigned job_instance):
         arrival_time(arrival_time),
         computation_cost(computation_cost),
@@ -33,25 +34,7 @@ namespace RTSTasks
         return (computed >= computation_cost);
     }
 
-    // Ordering functions
-    bool sortTaskByEarliestDeadline(const Task& a, const Task& b)
-    {
-        return (a.deadline != b.deadline) ? a.deadline < b.deadline : a.arrival_time <= b.arrival_time;
-    }
-    
-    bool sortTaskByEarliestArrivalTime(const Task& a, const Task& b)
-    {
-        return a.arrival_time <= b.arrival_time;
-    }
-
-    bool sortTaskByLowPeriodTime(const Task& a, const Task& b)
-    {   
-        if( !a.isPeriodic() || !b.isPeriodic() )
-            throw "Trying to order aperiodic tasks by period time";
-
-        return a.period <= b.period;
-    }
-
+    // STD Output Stream Functions
 	std::ostream& printPeriodicTask(std::ostream& os, const Task& t)
 	{
 		return os << "Task:" << t.job_instance
@@ -71,6 +54,7 @@ namespace RTSTasks
 			<< " is Aperiodic";
 	}
 
+    // Default ordering: Earliest Arrival First
 	std::ostream& operator<<(std::ostream& os, const Task& t)
 	{
 		return t.isPeriodic() ? printPeriodicTask(os, t) : printAperiodicTask(os, t);
