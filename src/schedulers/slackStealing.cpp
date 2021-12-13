@@ -59,7 +59,11 @@ namespace RTSSCheduler
             this->H = Utils::lcm(t.period, this->H);
 
         // Debug the Hyperperiod
-        // std::cout << "Hyperperiod is " << H << std::endl;
+        if(this->FLAG_DEBUG)
+        {
+            std::cout << "[i] prepareScheduler() debug info:" << std::endl;
+            std::cout << "[i] | -- Hyperperiod H is " << H << " ticks" << std::endl;
+        }  
 
         // Third step: calculate periodic ready (Pi(t)) work for each task to verify if is feasible
         std::vector<unsigned> high_priority_ready_work(H+2);
@@ -85,16 +89,16 @@ namespace RTSSCheduler
 
                 task_ready_work[t] = _getTaskReadyWorkAt(task, j) + high_priority_ready_work[t];
                 
-                // Use to debug the tasks :)
-                // std::cout << " t:" << t << " j:" <<  j << " dead:" << task_deadline << " next:" << task_next_period << " pit:" << task_ready_work[t] << std::endl;
-
                 // If is Tij deadline time and task_ready_work[t] > t then the schedule is not feasible
                 if(task_deadline == t && task_ready_work[t] > t)
-                    throw std::runtime_error(std::string("Rate Monotonic Scheduler: not feasible set of tasks."));
+                    throw std::runtime_error(std::string("Slack Stealing Scheduler: not feasible set of tasks."));
             }
 
-            // for(auto work: task_ready_work)
-            //    std::cout << work << " "; std::cout << std::endl;
+            if(this->FLAG_DEBUG){
+                std::cout << "[i] | -- A[" << task.priority << "](t): "; 
+                for(auto value : task_ready_work) std::cout << value << " ";
+                std::cout << std::endl;
+            }
 
             // Compute Ai(t) and A*(t)
             j = 1;
@@ -107,15 +111,17 @@ namespace RTSSCheduler
                 task_deadline = std::min<unsigned>(this->H, _getPeriodicInstanceDeadline(task, j));
 
                 // Debug Ai(t) values
-                // std::cout << "t: " << t << "\tj:"<< j << "\tdead:" << task_deadline << "\tw:" << task_ready_work[task_deadline-1] << "\tAi:" << task_deadline - task_ready_work[task_deadline-1] << std::endl;
                 this->ap_proc_time_per_level[task.priority][t] = task_deadline - task_ready_work[task_deadline-1];
+                
                 // This is A*(t)
                 this->ap_proc_times_zero_H[t] = std::min(this->ap_proc_times_zero_H[t], this->ap_proc_time_per_level[task.priority][t]);
             }
 
-            // Print A*(t)
-            // for(auto slack: this->ap_proc_times_zero_H)
-            //    std::cout << slack << " "; std::cout << std::endl;
+            if(this->FLAG_DEBUG){
+                std::cout << "[i] | -- A*[" << task.priority << "](t): "; 
+                for(auto value : ap_proc_time_per_level[task.priority]) std::cout << value << " ";
+                std::cout << std::endl;
+            }
 
             high_priority_ready_work = task_ready_work;
         } 
@@ -127,9 +133,7 @@ namespace RTSSCheduler
      
         for (int i = 0; i < this->periodic_tasks.size(); i++)
         {
-        	//std::cout << "ap_proc_time:" << this->ap_proc_time_per_level[i][t] << " Ap_acc:" << ap_processing_acumulator << " Inactive:" << inactive_acumulators[i] << std::endl;
 			min = std::min(this->ap_proc_time_per_level[i][t] - inactive_acumulators[i] - ap_processing_acumulator, min);
-            //std::cout << min << std::endl;
 		}        
 
         return min;
@@ -151,6 +155,7 @@ namespace RTSSCheduler
 
 	void SlackStealingScheduler::resetAcumulators()
 	{
+
 		std::fill(this->inactive_acumulators.begin(), this->inactive_acumulators.end(), 0);
 		ap_processing_acumulator = 0;
 	}
@@ -173,16 +178,24 @@ namespace RTSSCheduler
 	}
 
 	Task SlackStealingScheduler::chooseTaskToProcess()
-	{
+	{   
+        if(this->FLAG_DEBUG)
+            std::cout << "[i] chooseTaskToProcess()" << std::endl;
+        
         Task task = this->periodic_processing.top();
 		if(aperiodic_processing.empty())
-        {
+        {   
+            if(this->FLAG_DEBUG)    
+                std::cout << "[i] | -- No aperiodic work ready." << std::endl;
+
 			this->periodic_processing.pop();
             return task;
         }
 
 		int slackTimeAvailable = getSlackTimeAvaiable(this->abs_time % this->H);
-        std::cout << "Slack Time Available: " << slackTimeAvailable << std::endl;
+
+        if(this->FLAG_DEBUG)    
+            std::cout << "[i] | -- Slack Time Available " << slackTimeAvailable << std::endl;
 
 		bool enough_ap_processing = slackTimeAvailable > 0;
         if (!enough_ap_processing)
@@ -251,18 +264,24 @@ namespace RTSSCheduler
     {
 		// if at the beginning of a hyperperiod, reset acumulators
 		if(this->abs_time % this->H == 0)
-        {
 			this->resetAcumulators();
-        }
+        
+        std::cout << "[ ]" << std::endl;
+        std::cout << "[ ]" << std::endl;
+        std::cout << "[t] Time:" << this->abs_time << " | Relative time:" << this->abs_time % this->H << std::endl;
 
         // First step: add all ready tasks to processing queue
         this->updateProcessingQueues();
-		std::cout << "periodic arriving size: " << this->periodic_arriving.size() << std::endl;
-		std::cout << "aperiodic arriving size: " << this->aperiodic_arriving.size() << std::endl;
-		std::cout << "periodic processing size: " << this->periodic_processing.size() << std::endl;
-		std::cout << "aperiodic processing size: " << this->aperiodic_processing.size() << std::endl;
-        
-		std::cout << "Time:" << this->abs_time << " | Relative time:" << this->abs_time % this->H << std::endl;
+
+        if(this->FLAG_DEBUG)
+        {
+            std::cout << "[i] tick() debug info:" << std::endl;
+            std::cout << "[i] | -- Periodic Arriving Size: " << this->periodic_arriving.size() << std::endl;
+            std::cout << "[i] | -- Periodic Processing Size: " << this->periodic_processing.size() << std::endl;
+            std::cout << "[i] | -- Aperiodic Arriving Size: " << this->aperiodic_arriving.size() << std::endl;
+            std::cout << "[i] | -- Aperiodic Processing Size: " << this->aperiodic_processing.size() << std::endl;
+        }  
+
         if (!this->aperiodic_processing.empty() || !this->periodic_processing.empty())
         {
             // Second step: choose task to process
@@ -271,13 +290,26 @@ namespace RTSSCheduler
             // Third step: process task
             this->processTask(task_to_process);   
 
-            std::cout << "Processed: " << task_to_process << std::endl;
+            std::cout << "[t] Running " << task_to_process.name << ((task_to_process.isPeriodic()) ? " [Periodic]" : " [Aperiodic]") << std::endl;
+            
+            if(task_to_process.isPeriodic())
+                std::cout << "[t] | -- Priority=" << task_to_process.priority 
+                            << " Computed=" << task_to_process.computed << "/" << task_to_process.computation_cost
+                            << " Arrived="  << task_to_process.arrival_time
+                            << " Deadline=" << task_to_process.arrival_time + task_to_process.deadline;  
+            else 
+                std::cout << "[t] | -- Computed=" << task_to_process.computed << "/" << task_to_process.computation_cost
+                            << " Arrived="  << task_to_process.arrival_time;
+
+            if(task_to_process.computed == task_to_process.computation_cost)
+                std::cout << std::endl << "[t] | -- Task Finished :)";
         }
         else
         {
             unsigned cur_priority = this->periodic_tasks.size();
             this->updateAcumulators(cur_priority);
-            std::cout << "Processor idle" << std::endl;
+
+            std::cout << "[t] Processor Idle... ";
         }
         
         // Fourth step: advance time

@@ -24,9 +24,10 @@ namespace RTSSCheduler
             // Constructor
             SlackStealingScheduler() {}
 
-            std::vector<unsigned> ap_proc_times_zero_H;	// a.k.a A*(t)
-            std::vector<std::vector<unsigned>> ap_proc_time_per_level;	// a.k.a Ai(t)
-            unsigned ap_processing_available;	// a.k.a last calculated A*(s, t)
+            // Public only for tests purposes
+            std::vector<unsigned> ap_proc_times_zero_H;	                // A*(t)
+            std::vector<std::vector<unsigned>> ap_proc_time_per_level;	// Ai(t)
+            unsigned ap_processing_available;	                        // Last Calculated A*(s, t)
         
 		private:
             // Parameters
