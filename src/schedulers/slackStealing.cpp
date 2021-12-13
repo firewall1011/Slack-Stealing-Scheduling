@@ -49,7 +49,7 @@ namespace RTSSCheduler
     void SlackStealingScheduler::prepareScheduler()
     {
         // First step: order functions by period time (fixed priority)
-        std::sort(this->periodic_tasks.begin(), this->periodic_tasks.end(), sortTaskByLowPeriodTime);
+        std::sort(this->periodic_tasks.begin(), this->periodic_tasks.end(), sortTaskByRateMonotonic);
         
         for(int i = 0; i < this->periodic_tasks.size(); i++)
             periodic_tasks[i].priority = i;
