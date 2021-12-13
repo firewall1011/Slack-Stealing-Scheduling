@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <string>
 
 namespace RTSTasks 
 {   
@@ -19,7 +20,8 @@ namespace RTSTasks
             unsigned job_instance;      //  j
 
             // Utilities Variables
-            unsigned priority;           // ~ i (periodic)     | i (aperiodic)
+            std::string name;           // Human Readable Task Name  
+            unsigned priority;          // ~ i (periodic)     | i (aperiodic)
             unsigned computed = 0;      // already computed time
             
             // Constructors
