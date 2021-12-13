@@ -13,13 +13,13 @@ namespace RTSTasks
             unsigned deadline;           // ~ Di (periodic)    | none
             unsigned finish_time;        // ~ Cij (periodic)   | Tk (aperiodic)
             unsigned response_time;      // ~ Cij (periodic)   | Rk (aperiodic)
-            unsigned priority;           // ~ i (periodic)     | i (aperiodic)
-
+            
             // Periodic specific functions
             unsigned period;            // Ti (periodic)
             unsigned job_instance;      //  j
 
             // Utilities Variables
+            unsigned priority;           // ~ i (periodic)     | i (aperiodic)
             unsigned computed = 0;      // already computed time
             
             // Constructors
@@ -34,19 +34,15 @@ namespace RTSTasks
 
             bool compute();
 
+            // Default ordering: Earliest Arrival First
             bool operator<(const Task& other) const
             {
                 return this->arrival_time < other.arrival_time;
             }
 			
+            // std::out function
 			friend std::ostream& operator<<(std::ostream& os, const Task& t);
     };
-
-    bool sortTaskByEarliestDeadline(const Task& a, const Task& b);
-            
-    bool sortTaskByEarliestArrivalTime(const Task& a, const Task& b);
-
-    bool sortTaskByLowPeriodTime(const Task& a, const Task& b);
 }
 
 // Aditional information:

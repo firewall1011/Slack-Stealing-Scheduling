@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "../tasks/task.hpp"
+#include "../tasks/sortingStrategies.hpp"
 
 using namespace RTSTasks;
 
@@ -30,4 +31,20 @@ namespace RTSSCheduler
 
             virtual void addOnlineTask(Task t) = 0;
     };
+
+    struct OrderTaskByPriority
+	{
+		bool operator() (Task a, Task b)
+		{
+			return a.priority > b.priority;
+		}
+	};
+
+	struct OrderTaskByArrivalTime
+	{
+		bool operator() (Task a, Task b)
+		{
+			return a.arrival_time > b.arrival_time;
+		}
+	};
 }

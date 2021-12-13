@@ -8,22 +8,6 @@ using namespace RTSTasks;
 
 namespace RTSSCheduler 
 {
-	struct OrderTaskByPriority
-	{
-		bool operator() (Task a, Task b)
-		{
-			return a.priority > b.priority;
-		}
-	};
-
-	struct OrderTaskByArrivalTime
-	{
-		bool operator() (Task a, Task b)
-		{
-			return a.arrival_time > b.arrival_time;
-		}
-	};
-
     class RateMonotonicScheduler : public BaseScheduler
     {   
         public:

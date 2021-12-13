@@ -13,8 +13,8 @@ int main(void){
     { 
         RateMonotonicScheduler scheduler;
 
-        scheduler.preloadTask(TaskBuilder::createPeriodicTask(0, 4, 1, 1));
-        scheduler.preloadTask(TaskBuilder::createPeriodicTask(0, 6, 3, 6));
+        scheduler.preloadTask(TaskBuilder::createPeriodicTask(0, 3, 1, 1));
+        scheduler.preloadTask(TaskBuilder::createPeriodicTask(0, 6, 1, 3));
         scheduler.preloadTask(TaskBuilder::createTask(3, 4));
 
         scheduler.prepareScheduler();
