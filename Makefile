@@ -28,3 +28,6 @@ full:
 	make check
 	make run
 	make clear
+
+case: 
+	(cat cases/$(filename) && cat) | ./main.out

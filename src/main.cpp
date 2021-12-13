@@ -24,12 +24,12 @@ int main(void){
     printHeader();
 
     // 1 ~ Selecting the Scheduler
-    printf("[!] Select the Scheduler: [0] Rate Monotonic | [1] Slack Stealing: ");
+    printf("[!] Select the Scheduler: [1] Rate Monotonic | [2] Slack Stealing: ");
     std::cin >> userOpt;
 
-    if(userOpt == 0)
+    if(userOpt == 1)
         scheduler = new RateMonotonicScheduler();
-    else if (userOpt == 1)
+    else if (userOpt == 2)
         scheduler = new SlackStealingScheduler();    
     else
     {
