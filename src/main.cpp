@@ -10,6 +10,8 @@
 using namespace RTSTasks;
 using namespace RTSSCheduler;
 
+#define ENABLE_DEBUG true
+
 int main(void){
 
     // User Inputs
@@ -36,6 +38,7 @@ int main(void){
         printf("[x] Error: Invalid Scheduler Selection! Exited!");
         return EXIT_FAILURE;
     }
+    scheduler->FLAG_DEBUG = ENABLE_DEBUG;
 
     // 2 ~ Preloading Tasks
     userOpt = -1;
@@ -106,6 +109,9 @@ int main(void){
         {
             scheduler->tick();
         }
+
+        printf("[ ]\n[ ]\n");
+        printf("[!] Good bye!\n");
     }
     catch(const std::exception& e)
     {

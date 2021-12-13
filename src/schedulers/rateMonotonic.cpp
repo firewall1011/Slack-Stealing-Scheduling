@@ -55,7 +55,11 @@ namespace RTSSCheduler
             this->H = Utils::lcm(t.period, this->H);
 
         // Debug the Hyperperiod
-        // std::cout << "Hyperperiod is " << H << std::endl;
+        if(this->FLAG_DEBUG)
+        {
+            std::cout << "[i] prepareScheduler() debug info:" << std::endl;
+            std::cout << "[i] | -- Hyperperiod H is " << H << " ticks" << std::endl;
+        }   
 
         // Third step: calculate periodic ready (Pi(t)) work for each task to verify if is feasible
         std::vector<unsigned> high_priority_ready_work(H+2);
@@ -81,12 +85,18 @@ namespace RTSSCheduler
             }
 
             high_priority_ready_work = task_ready_work;
+
+            if(this->FLAG_DEBUG){
+                std::cout << "[i] | -- A[" << task.priority << "](t): "; 
+                for(auto value : high_priority_ready_work) std::cout << value << " ";
+                std::cout << std::endl;
+            }
         } 
     }
     
     // Running Scheduler
     void RateMonotonicScheduler::start()
-    {
+    {    
 		while(!periodic_arriving.empty()) periodic_arriving.pop();
 
         for (const Task& periodic : periodic_tasks)
@@ -99,10 +109,18 @@ namespace RTSSCheduler
     {
         // First step: add all ready tasks to processing queue
         this->_updateProcessingQueues();
-		std::cout << "periodic arriving size: " << this->periodic_arriving.size() << std::endl;
-		std::cout << "periodic processing size: " << this->periodic_processing.size() << std::endl;
-        
-		std::cout << "Time:" << this->abs_time << " | Relative time:" << this->abs_time % this->H << std::endl;
+
+        std::cout << "[ ]" << std::endl;
+        std::cout << "[ ]" << std::endl;
+        std::cout << "[t] Time:" << this->abs_time << " | Relative time:" << this->abs_time % this->H << std::endl;
+
+        if(this->FLAG_DEBUG)
+        {
+            std::cout << "[i] tick() debug info:" << std::endl;
+            std::cout << "[i] | -- Periodic Arriving Size: " << this->periodic_arriving.size() << std::endl;
+            std::cout << "[i] | -- Periodic Processing Size: " << this->periodic_processing.size() << std::endl;
+        }  
+
         if (!this->periodic_processing.empty())
         {
             // Second step: choose task to process
@@ -110,13 +128,24 @@ namespace RTSSCheduler
 
             // Third step: process task
             this->_processTask(task_to_process);   
+            
+            std::cout << "[t] Running " << task_to_process.name << ((task_to_process.isPeriodic()) ? " [Periodic]" : " [Aperiodic]") << std::endl;
+            
+            if(task_to_process.isPeriodic())
+                std::cout << "[t] | -- Priority=" << task_to_process.priority 
+                            << " Computed=" << task_to_process.computed << "/" << task_to_process.computation_cost
+                            << " Arrived="  << task_to_process.arrival_time
+                            << " Deadline=" << task_to_process.arrival_time + task_to_process.deadline;  
+            else 
+                std::cout << "[t] | -- Computed=" << task_to_process.computed << "/" << task_to_process.computation_cost
+                            << " Arrived="  << task_to_process.arrival_time;
 
-            std::cout << "Processed: " << task_to_process << std::endl;
+            if(task_to_process.computed == task_to_process.computation_cost)
+                std::cout << std::endl << "[t] | -- Task Finished :)";
         }
         else
         {
-            unsigned cur_priority = this->periodic_tasks.size();
-            std::cout << "Processor idle" << std::endl;
+            std::cout << "[t] Processor Idle... ";
         }
         
         // Fourth step: advance time
